@@ -1,0 +1,35 @@
+{
+  "name": "farmacias-chile-vue",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:unit": "vitest",
+    "test:e2e": "start-server-and-test preview http://localhost:4173 'cypress run --e2e'",
+    "test:e2e:dev": "start-server-and-test 'vite dev --port 4173' http://localhost:4173 'cypress open --e2e'"
+  },
+  "dependencies": {
+    "@vitejs/plugin-basic-ssl": "^1.0.1",
+    "geolib": "^3.3.3",
+    "is-valid-coords": "^1.3.0",
+    "leaflet-easybutton": "^2.4.0",
+    "leaflet-routing-machine": "^3.2.12",
+    "leaflet.markercluster": "^1.5.3",
+    "pinia": "^2.0.32",
+    "vue": "^3.2.47",
+    "vue-router": "^4.1.6"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.0.0",
+    "@vue-leaflet/vue-leaflet": "^0.9.0",
+    "@vue/test-utils": "^2.3.0",
+    "jsdom": "^21.1.0",
+    "leaflet": "^1.9.3",
+    "sass": "^1.59.3",
+    "start-server-and-test": "^2.0.0",
+    "vite": "^4.1.4",
+    "vitest": "^0.29.1"
+  }
+}
