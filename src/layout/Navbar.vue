@@ -37,7 +37,7 @@
       <li>
         <button class="text-center" data-bs-toggle="modal" data-bs-target="#modalInfo">
           <i class="fas fa-question-circle"></i>
-          <span class="ms-1 d-block small text-muted">Acerda de</span>
+          <span class="ms-1 d-block small text-muted">Acerca de</span>
         </button> 
       </li>
     </ul>
