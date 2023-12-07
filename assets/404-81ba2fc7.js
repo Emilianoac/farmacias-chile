@@ -1,0 +1,1 @@
+import{_ as t,o as s,c,a as e}from"./index-07cfe3db.js";const n={},_={class:"main-404"},a=e("div",{class:"container"},[e("h1",{class:"text-center"},"404"),e("h2",{class:"text-center"},"Página no encontrada")],-1),o=[a];function r(i,d){return s(),c("main",_,o)}const f=t(n,[["render",r]]);export{f as default};
