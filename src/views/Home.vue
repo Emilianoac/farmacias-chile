@@ -2,7 +2,7 @@
   <div class="main-home">
     <div class="container">
       <Loader v-if="!pharmsStore.fetchError && !pharmsStore.pharms.length"/>
-      <div v-else-if="pharmsStore.pharms.length" class="home-layout">
+      <div v-if="!pharmsStore.fetchError" class="home-layout">
         <div class="layout-info">
           <!-- BUSCAR POR COMUNA -->
           <div class="mb-3">
