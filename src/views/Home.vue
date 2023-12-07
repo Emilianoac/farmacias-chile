@@ -1,16 +1,16 @@
 <template>
   <div class="main-home">
     <div class="container">
-      <div class="home-layout">
+      <Loader v-if="!pharmsStore.fetchError && !pharmsStore.pharms.length"/>
+      <div v-else-if="pharmsStore.pharms.length" class="home-layout">
         <div class="layout-info">
-
           <!-- BUSCAR POR COMUNA -->
           <div class="mb-3">
             <div class="custom-select">
               <div class="d-flex justify-content-between aling-itmems-center mt-3 mt-md-4 mb-2">
                 <label class="form-label mb-0"><strong>Buscar por comuna</strong></label>
                 <p class="text small mb-0"> Total Farmacias: <strong>
-                  {{ pharmsStore.commune.value == 'TODAS' ? pharmsStore.pharms.length : pharmsStore.pagination.commune.total }} </strong></p>
+                  {{ pharmsStore.commune.value == "TODAS" ? pharmsStore.pharms.length : pharmsStore.pagination.commune.total }} </strong></p>
               </div>
               <div class="custom-select__container">
                 <div class="select__seleccionado" @click="customSelect.display = !customSelect.display"> 
@@ -49,26 +49,27 @@
           <PharmsMap v-if="pharmsStore.pharms" :pharms="pharmsStore.pharms"/>
         </div>
       </div>
+      <Error v-else/>
     </div>
   </div>
 </template>
 
 <script setup>
-  import { ref, watch, reactive } from 'vue'
-  import { storeToRefs } from 'pinia'
-  import {usePharmsStore} from '../stores/pharmsStore'
+  import { ref, watch, reactive } from "vue"
+  import { storeToRefs } from "pinia"
+  import {usePharmsStore} from "../stores/pharmsStore"
 
-  import 'leaflet-easybutton'
+  import "leaflet-easybutton"
   import {markers as icons, routeIcons } from "@/composables/markers.js"
   import { getNearestCoordinate } from "@/composables/getNearestCoordinate.js"
 
+  import "leaflet-routing-machine/dist/leaflet-routing-machine.css"
+  import "leaflet-routing-machine/dist/leaflet-routing-machine.js"
   
-  import 'leaflet-routing-machine/dist/leaflet-routing-machine.css'
-  import 'leaflet-routing-machine/dist/leaflet-routing-machine.js'
-  
-  import PharmsList from '../components/PharmsList.vue'
-  import PharmsMap from '../components/PharmsMap.vue'
-  import Loader from '../components/SpinLoader.vue'
+  import PharmsList from "../components/PharmsList.vue"
+  import PharmsMap from "../components/PharmsMap.vue"
+  import Error from "../components/Error.vue"
+  import Loader from "../components/SpinLoader.vue"
 
   // store
   const pharmsStore = usePharmsStore()
@@ -78,11 +79,10 @@
 
   const { pharmsToShow } = storeToRefs(pharmsStore)
 
-  let communeSearch = ref('')
+  let communeSearch = ref("")
   let customSelect = reactive({
     display: false,
   })
-
 
   function selectCommune(commune) {
     customSelect.display = false
@@ -130,7 +130,7 @@
                 let marker
                 if(i === 0) {
                   markerIcon = startIcon
-                  marker = L.marker(start.latLng, { draggable: false, icon: markerIcon, title: 'Tú ubicación'})
+                  marker = L.marker(start.latLng, { draggable: false, icon: markerIcon, title: "Tú ubicación"})
                 } else {
                   marker = L.marker(start.latLng, { draggable: false})
                 }
@@ -145,11 +145,11 @@
             plan: plan,
             showAlternatives: false,
             lineOptions: {
-              styles: [{color: 'magenta', opacity: 1, weight: 3}],
+              styles: [{color: "magenta", opacity: 1, weight: 3}],
               addWaypoints: false,
             },
             routeWhileDragging: true,
-            language: 'es',
+            language: "es",
           }).addTo(pharmsStore.map)
 
           // limpiar marcadores del mapa
@@ -171,7 +171,7 @@
       )
  
     } else {
-      console.log('La api de geolocalización no está disponible en este navegador.')
+      console.log("La api de geolocalización no está disponible en este navegador.")
     }
   }
 

@@ -1,11 +1,12 @@
-import {defineStore} from 'pinia'
-import L, { icon } from 'leaflet'
+import {defineStore} from "pinia"
+import L, { icon } from "leaflet"
+import axios from "axios"
 import {markers as icons, routeIcons } from "@/composables/markers.js"
 import { isLocatedInChile } from "@/composables/chileanCoordsCheker.js"
 import { getNearestCoordinate } from "@/composables/getNearestCoordinate.js"
 import isValidCoords from "is-valid-coords"
 
-export const usePharmsStore = defineStore('pharmsStore', {
+export const usePharmsStore = defineStore("pharmsStore", {
   state: () => ({
     pharms: [],
     topPharms: [],
@@ -13,7 +14,7 @@ export const usePharmsStore = defineStore('pharmsStore', {
     communes: [],
     commune: {
       userSearch: false,
-      value: 'TODAS',
+      value: "TODAS",
       prevValue: null
     },
     map: null,
@@ -28,7 +29,8 @@ export const usePharmsStore = defineStore('pharmsStore', {
         total: 0,
         value: 25,
       }
-    }
+    },
+    fetchError: false,
   }),
   getters: {
     communestoShow: (state) => {
@@ -44,7 +46,7 @@ export const usePharmsStore = defineStore('pharmsStore', {
       }
     },
     pharmsToShow: (state) => {
-      if (state.commune.value === 'TODAS') {
+      if (state.commune.value === "TODAS") {
         state.pagination.commune.value = 25
         return state.pharms.slice(0, state.pagination.all)
       } else if (state.commune) {
@@ -57,77 +59,82 @@ export const usePharmsStore = defineStore('pharmsStore', {
   },
   actions: {
     async getPharms() {
-      let res = await fetch('https://midas.minsal.cl/farmacia_v2/WS/getLocales.php')
-      let data = await res.json()
-
-      let customMarkers = {}
-      for(let icon in icons) {
-        customMarkers[icon] = L.icon({ 
-          iconUrl: icons[icon].icon,
-          iconSize: [40, 40],
-          iconAnchor: [15, 30],
-          setIcon : function (icon) {
-            this.iconUrl = icon
-          },
-        })
-      }
-
-      // Validar que las coordenadas sean válidas y que estén dentro de Chile
-      data.forEach(pharm => {
-        if(isValidCoords(pharm.local_lat , pharm.local_lng)) {
-          if(isLocatedInChile(pharm.local_lat , pharm.local_lng)) {
-
-            // Formatear las horas de apertura y cierre
-            pharm.funcionamiento_hora_apertura = pharm.funcionamiento_hora_apertura.split(':')
-            pharm.funcionamiento_hora_apertura = pharm.funcionamiento_hora_apertura[0] + ':' + pharm.funcionamiento_hora_apertura[1]
-
-            pharm.funcionamiento_hora_cierre = pharm.funcionamiento_hora_cierre.split(':')
-            pharm.funcionamiento_hora_cierre = pharm.funcionamiento_hora_cierre[0] + ':' + pharm.funcionamiento_hora_cierre[1]
-
-            // Asignar icono según el nombre de la farmacia
-            if(pharm.local_nombre.includes('CRUZ VERDE')) {
-              pharm.icon = customMarkers.cruz_verde
-              pharm.customLogo = icons.cruz_verde.logo
-            } else if(pharm.local_nombre.includes('AHUMADA')) {
-              pharm.icon = customMarkers.farmacias_ahumada
-              pharm.customLogo = icons.farmacias_ahumada.logo
-            } else if(pharm.local_nombre.includes('SALCOBRAND')) {
-              pharm.icon = customMarkers.salcobrand
-              pharm.customLogo = icons.salcobrand.logo
-            } else if(pharm.local_nombre.includes('SIMI')) {
-              pharm.icon = customMarkers.dr_simi
-              pharm.customLogo = icons.dr_simi.logo
-            }  else if(pharm.local_nombre.includes('KNOP')) {
-              pharm.icon = customMarkers.knop
-              pharm.customLogo = icons.knop.logo
-            } else {
-              pharm.icon = customMarkers.farmacia_default
-              pharm.customLogo = icons.farmacia_default.logo
-            }
-            this.pharms.push(pharm)
-          }
+      try {
+        let res = await axios.get('https://midas.minsal.cl/farmacia_v2/WS/getLocales.php', { timeout: 5000 })
+        let data = res.data
+  
+        let customMarkers = {}
+        for(let icon in icons) {
+          customMarkers[icon] = L.icon({ 
+            iconUrl: icons[icon].icon,
+            iconSize: [40, 40],
+            iconAnchor: [15, 30],
+            setIcon : function (icon) {
+              this.iconUrl = icon
+            },
+          })
         }
-      })
-
-      let topPharms = []
-
-      // Cantidad Sucursales principales farmacias
-      let cruzVerde = this.pharms.filter(pharm => pharm.local_nombre.includes('CRUZ VERDE')).length
-      let ahumada = this.pharms.filter(pharm => pharm.local_nombre.includes('AHUMADA')).length
-      let salcobrand = this.pharms.filter(pharm => pharm.local_nombre.includes('SALCOBRAND')).length
-      let drSimi = this.pharms.filter(pharm => pharm.local_nombre.includes('SIMI')).length
-
-      topPharms.push({name: 'Cruz Verde', value: cruzVerde ,logo: icons.cruz_verde.logo} )
-      topPharms.push({name: 'Ahumada', value: ahumada, logo: icons.farmacias_ahumada.logo})
-      topPharms.push({name: 'Salcobrand', value: salcobrand, logo: icons.salcobrand.logo})
-      topPharms.push({name: 'Dr. Simi', value: drSimi, logo: icons.dr_simi.logo})
-
-      topPharms.sort((a, b) => b.value - a.value)
-
-      this.topPharms = topPharms
-
-      // Array con las comunas únicas
-      this.communes = [...new Set(this.pharms.map(item => item.comuna_nombre))]
+  
+        // Validar que las coordenadas sean válidas y que estén dentro de Chile
+        data.forEach(pharm => {
+          if(isValidCoords(pharm.local_lat , pharm.local_lng)) {
+            if(isLocatedInChile(pharm.local_lat , pharm.local_lng)) {
+  
+              // Formatear las horas de apertura y cierre
+              pharm.funcionamiento_hora_apertura = pharm.funcionamiento_hora_apertura.split(":")
+              pharm.funcionamiento_hora_apertura = pharm.funcionamiento_hora_apertura[0] + ":" + pharm.funcionamiento_hora_apertura[1]
+  
+              pharm.funcionamiento_hora_cierre = pharm.funcionamiento_hora_cierre.split(":")
+              pharm.funcionamiento_hora_cierre = pharm.funcionamiento_hora_cierre[0] + ":" + pharm.funcionamiento_hora_cierre[1]
+  
+              // Asignar icono según el nombre de la farmacia
+              if(pharm.local_nombre.includes("CRUZ VERDE")) {
+                pharm.icon = customMarkers.cruz_verde
+                pharm.customLogo = icons.cruz_verde.logo
+              } else if(pharm.local_nombre.includes("AHUMADA")) {
+                pharm.icon = customMarkers.farmacias_ahumada
+                pharm.customLogo = icons.farmacias_ahumada.logo
+              } else if(pharm.local_nombre.includes("SALCOBRAND")) {
+                pharm.icon = customMarkers.salcobrand
+                pharm.customLogo = icons.salcobrand.logo
+              } else if(pharm.local_nombre.includes("SIMI")) {
+                pharm.icon = customMarkers.dr_simi
+                pharm.customLogo = icons.dr_simi.logo
+              }  else if(pharm.local_nombre.includes("KNOP")) {
+                pharm.icon = customMarkers.knop
+                pharm.customLogo = icons.knop.logo
+              } else {
+                pharm.icon = customMarkers.farmacia_default
+                pharm.customLogo = icons.farmacia_default.logo
+              }
+              this.pharms.push(pharm)
+            }
+          }
+        })
+  
+        let topPharms = []
+  
+        // Cantidad Sucursales principales farmacias
+        let cruzVerde = this.pharms.filter(pharm => pharm.local_nombre.includes("CRUZ VERDE")).length
+        let ahumada = this.pharms.filter(pharm => pharm.local_nombre.includes("AHUMADA")).length
+        let salcobrand = this.pharms.filter(pharm => pharm.local_nombre.includes("SALCOBRAND")).length
+        let drSimi = this.pharms.filter(pharm => pharm.local_nombre.includes("SIMI")).length
+  
+        topPharms.push({name: "Cruz Verde", value: cruzVerde ,logo: icons.cruz_verde.logo} )
+        topPharms.push({name: "Ahumada", value: ahumada, logo: icons.farmacias_ahumada.logo})
+        topPharms.push({name: "Salcobrand", value: salcobrand, logo: icons.salcobrand.logo})
+        topPharms.push({name: "Dr. Simi", value: drSimi, logo: icons.dr_simi.logo})
+  
+        topPharms.sort((a, b) => b.value - a.value)
+  
+        this.topPharms = topPharms
+  
+        // Array con las comunas únicas
+        this.communes = [...new Set(this.pharms.map(item => item.comuna_nombre))]
+      } catch(error) {
+        this.fetchError = true
+        console.error('Error en la solicitud:', error.message)
+      }
     },
     async getNearestPharm() {
       if (navigator.geolocation) {
@@ -165,7 +172,7 @@ export const usePharmsStore = defineStore('pharmsStore', {
                   let marker
                   if(i === 0) {
                     markerIcon = startIcon
-                    marker = L.marker(start.latLng, { draggable: false, icon: markerIcon, title: 'Tú ubicación'})
+                    marker = L.marker(start.latLng, { draggable: false, icon: markerIcon, title: "Tú ubicación"})
                   } else {
                     marker = L.marker(start.latLng, { draggable: false})
                   }
@@ -180,11 +187,11 @@ export const usePharmsStore = defineStore('pharmsStore', {
               plan: plan,
               showAlternatives: false,
               lineOptions: {
-                styles: [{color: 'magenta', opacity: 1, weight: 3}],
+                styles: [{color: "magenta", opacity: 1, weight: 3}],
                 addWaypoints: false,
               },
               routeWhileDragging: true,
-              language: 'es',
+              language: "es",
             }).addTo(this.map)
 
             this.mapMarkers.clearLayers()
@@ -200,7 +207,7 @@ export const usePharmsStore = defineStore('pharmsStore', {
         )
    
       } else {
-        console.log('La api de geolocalización no está disponible en este navegador.')
+        console.log("La api de geolocalización no está disponible en este navegador.")
       }
     },
     setCommune(commune) {
@@ -232,7 +239,7 @@ export const usePharmsStore = defineStore('pharmsStore', {
       this.pagination.commune.value = 25
     },
     openMap() {
-      document.querySelector('.layout-mapa').classList.add('show')
+      document.querySelector(".layout-mapa").classList.add("show")
       this.map.invalidateSize()
     },
   }
